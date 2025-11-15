@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard البوت</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h1>Dashboard البوت</h1>
+
+<div>جاري تحميل الرومات...</div>
+
+<!-- لاحقًا يمكن إضافة قائمة الرومات + قفل الروم -->
+<!-- بدون Proxy لا يمكن جلب الرومات مباشرة -->
+
+</body>
+</html>">جارٍ تحميل الرومات...</option>
+</select>
+
+<button onclick="lockChannel()">قفل الروم</button>
+
+<div class="status" id="status"></div>
+
+<script src="script.js"></script>
+</body>
+</html>button {
+        padding: 10px;
+        margin: 10px;
+        border-radius: 8px;
+        border: 2px solid #0ff;
+        background-color: #111;
+        color: #0ff;
+        font-size: 1em;
+        outline: none;
+    }
+
+    button {
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+        background: linear-gradient(45deg, #00f, #0ff);
+        color: white;
+        border: none;
+    }
+
+    button:hover { transform: scale(1.05); box-shadow: 0 0 15px #0ff; }
+
+    .status {
+        margin-top: 15px;
+        font-size: 1em;
+        color: #0ff;
+        text-shadow: 0 0 5px #0ff;
+    }
+</style>
+</head>
+<body>
+
+<h1>Dashboard البوت - قفل الرومات</h1>
+
+<div id="botStatus">جاري التحقق من حالة البوت...</div>
+
+<input id="password" type="password" placeholder="أدخل كلمة السر">
+
+<select id="channelSelect">
+    <option value="">جارٍ تحميل الرومات...</option>
+</select>
+
+<button onclick="lockChannel()">قفل الروم</button>
+
+<div class="status" id="status"></div>
+
+<script>
+const channelSelect = document.getElementById('channelSelect');
+const statusEl = document.getElementById('status');
+const botStatusEl = document.getElementById('botStatus');
+
+// عند تحميل الصفحة
+window.addEventListener('DOMContentLoaded', () => {
+    checkBotStatus();
+    fetchChannels();
+});
+
+// --- تحقق من حالة البوت ---
+async function checkBotStatus() {
+    try {
+        const res = await fetch('https://fi11.bot-hosting.net:20465/api/status');
+        const data = await res.json();
+        if(data.status === "online") {
+            botStatusEl.textContent = "✅ البوت متصل (Online)";
+            botStatusEl.style.color = "#0f0";
+        } else {
+            botStatusEl.textContent = "❌ البوت غير متصل (Offline)";
+            botStatusEl.style.color = "#f00";
+        }
+    } catch(err) {
+        console.error(err);
+        botStatusEl.textContent = "❌ البوت غير متصل (Offline)";
+        botStatusEl.style.color = "#f00";
+    }
+}
+
+// --- جلب الرومات ---
+async function fetchChannels() {
+    try {
+        const res = await fetch('https://fi11.bot-hosting.net:20465/api/get-channels');
+        const data = await res.json();
+
+        if(data.status === 'success') {
+            channelSelect.innerHTML = '';
+            data.channels.forEach(ch => {
+                const option = document.createElement('option');
+                option.value = ch.id;
+                option.textContent = ch.name;
+                channelSelect.appendChild(option);
+            });
+            statusEl.textContent = "✅ تم جلب الرومات بنجاح";
+        } else {
+            statusEl.textContent = "❌ لم أتمكن من جلب الرومات";
+        }
+    } catch(err) {
+        console.error(err);
+        statusEl.textContent = "❌ حدث خطأ أثناء جلب الرومات";
+    }
+}
+
+// --- قفل الروم ---
+async function lockChannel() {
+    const channelId = channelSelect.value;
+    const password = document.getElementById('password').value;
+
+    if(!password || !channelId) {
+        statusEl.textContent = "⚠️ الرجاء إدخال كلمة السر واختيار الروم";
+        return;
+    }
+
+    try {
+        const res = await fetch('https://fi11.bot-hosting.net:20465/api/lock-channel', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password, channelId })
+        });
+        const data = await res.json();
+
+        if(data.status === 'success') statusEl.textContent = "✅ " + data.message;
+        else statusEl.textContent = "❌ " + data.message;
+    } catch(err) {
+        console.error(err);
+        statusEl.textContent = "❌ حدث خطأ أثناء محاولة قفل الروم";
+    }
+}
+</script>
+
+</body>
+</html>
